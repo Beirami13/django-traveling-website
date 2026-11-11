@@ -1,0 +1,100 @@
+
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Log in | Safarnameh{% endblock %}
+
+{% block main %}
+
+<main id="main" class="auth">
+
+    <div class="auth__art">
+
+        <img class="hero-img--light"
+             src="{% static 'img/hero-light.jpg' %}"
+             alt="">
+
+        <img class="hero-img--dark"
+             src="{% static 'img/hero-dark.jpg' %}"
+             alt="">
+
+        <blockquote>
+            A memory you never write down slowly fades.
+            <cite>Safarnameh</cite>
+        </blockquote>
+
+    </div>
+
+
+    <div class="auth__form">
+
+        <div class="auth__box">
+
+            <h1>Welcome back</h1>
+
+            <p class="muted">
+                Log in to continue your journal.
+            </p>
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form action="{% url 'account:login' %}"
+                  method="post">
+
+                {% csrf_token %}
+
+                <div class="field">
+
+                    <label for="{{ form.phone_number.id_for_label }}">
+                        Phone number
+                    </label>
+
+                    {{ form.phone_number }}
+
+                    {% for error in form.phone_number.errors %}
+                        <small class="error">{{ error }}</small>
+                    {% endfor %}
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="{{ form.password.id_for_label }}">
+                        Password
+                    </label>
+
+                    {{ form.password }}
+
+                    {% for error in form.password.errors %}
+                        <small class="error">{{ error }}</small>
+                    {% endfor %}
+
+                </div>
+
+
+                <button class="btn btn--block" type="submit">
+                    Log in
+                </button>
+
+            </form>
+
+
+            <p class="auth__alt">
+                New here?
+                <a href="{% url 'account:register' %}">
+                    Create an account
+                </a>
+            </p>
+
+        </div>
+
+    </div>
+
+</main>
+
+{% endblock %}

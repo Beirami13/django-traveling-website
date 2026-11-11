@@ -1,0 +1,71 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Verify phone | Safarnameh{% endblock %}
+
+{% block main %}
+
+<main id="main" class="auth">
+
+    <div class="auth__form">
+
+        <div class="auth__box">
+
+            <h1>Verify your phone number</h1>
+
+            <p class="muted">
+                Enter the verification code sent to your phone.
+            </p>
+
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+
+            <form method="post"
+                  action="{% url 'account:check_otp' %}?token={{ token }}">
+
+                {% csrf_token %}
+
+                <input type="hidden"
+                       name="token"
+                       value="{{ token }}">
+
+                <div class="field">
+
+                    <label for="{{ form.code.id_for_label }}">
+                        Verification code
+                    </label>
+
+                    {{ form.code }}
+
+                    {% for error in form.code.errors %}
+                        <small class="error">{{ error }}</small>
+                    {% endfor %}
+
+                </div>
+
+
+                <button class="btn btn--block" type="submit">
+                    Verify
+                </button>
+
+            </form>
+
+
+            <p class="auth__alt">
+                <a href="{% url 'account:register' %}">
+                    Back to registration
+                </a>
+            </p>
+
+        </div>
+
+    </div>
+
+</main>
+
+{% endblock %}

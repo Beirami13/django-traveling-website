@@ -1,0 +1,1220 @@
+
+{% load static %}
+
+{% url 'index' as index_url %}
+{% url 'explore' as explore_url %}
+{% url 'journal' as journal_url %}
+{% url 'notifications' as notifications_url %}
+{% url 'profile' as profile_url %}
+{% url 'settings' as settings_url %}
+{% url 'login' as login_url %}
+{% url 'memory' as memory_url %}
+{% url 'memory_edit' as memory_edit_url %}
+
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+
+    <title>Discover | Safarnameh</title>
+
+    <script>
+        try {
+            var m = localStorage.getItem('sf-mode') ||
+                (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+
+            document.documentElement.dataset.mode = m;
+        } catch (e) {
+            document.documentElement.dataset.mode = 'light';
+        }
+    </script>
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<header class="site-header">
+    <div class="wrap">
+
+        <a class="logo" href="{{ index_url|default:'#' }}">
+            <svg viewBox="0 0 32 32" aria-hidden="true">
+                <rect width="32" height="32" rx="9" style="fill:var(--primary)"/>
+                <path d="M6 10l6-2 8 2 6-2v14l-6 2-8-2-6 2z"
+                      style="fill:var(--on-primary)"/>
+                <path d="M12 8v14M20 10v14"
+                      style="stroke:var(--primary)"
+                      stroke-width="1.2"/>
+                <circle cx="21" cy="14" r="2.6"
+                        style="fill:var(--accent)"/>
+            </svg>
+            Safarnameh
+        </a>
+
+        <nav class="nav" aria-label="Main">
+            <a href="{{ index_url|default:'#' }}" aria-current="page">Discover</a>
+            <a href="{{ explore_url|default:'#' }}">Explore destinations</a>
+            <a href="{{ journal_url|default:'#' }}">My journal</a>
+        </nav>
+
+        <div class="header-tools">
+
+            <a class="hsearch" href="{{ explore_url|default:'#' }}#search">
+                <i data-lucide="search"></i>
+                Search memories…
+            </a>
+
+            <button class="icon-btn theme-btn"
+                    type="button"
+                    data-theme-toggle
+                    aria-label="Toggle light / dark mode">
+
+                <span class="moon">
+                    <i data-lucide="moon"></i>
+                </span>
+
+                <span class="sun">
+                    <i data-lucide="sun"></i>
+                </span>
+
+            </button>
+
+            <a class="icon-btn"
+               href="{{ notifications_url|default:'#' }}"
+               aria-label="Notifications">
+
+                <i data-lucide="bell"></i>
+                <span class="dot"></span>
+
+            </a>
+
+            {% if request.user.is_authenticated %}
+
+                <div class="btn-group ml-3" role="group">
+
+                    <a href="{% url 'account:edit' %}"
+                       class="btn orange-user">
+
+                        {% if request.user.profile.image %}
+
+                            <img
+                                src="{{ request.user.profile.image.url }}"
+                                width="20"
+                                height="20"
+                                style="border-radius: 100%;"
+                                alt="Profile"
+                            >
+
+                        {% else %}
+
+                            <img
+                                src="{% static 'images/profile.jpg' %}"
+                                width="20"
+                                height="20"
+                                style="border-radius: 100%;"
+                                alt="Profile"
+                            >
+
+                        {% endif %}
+
+                        {{ request.user.username }}
+
+                    </a>
+
+                    <a href="{% url 'account:logout' %}"
+                       class="btn orange-outline-btn">
+
+                        Logout
+
+                    </a>
+
+                </div>
+
+            {% else %}
+
+                <div class="btn-group ml-3" role="group">
+
+                    <a href="{% url 'account:login' %}"
+                       class="btn orange-btn">
+
+                        Login
+
+                    </a>
+
+                    <a href="{% url 'account:register' %}"
+                       class="btn orange-outline-btn">
+
+                        Register
+
+                    </a>
+
+                </div>
+
+            {% endif %}
+
+            <button class="icon-btn nav-toggle"
+                    type="button"
+                    data-nav-toggle
+                    aria-expanded="false"
+                    aria-label="Menu">
+
+                <i data-lucide="menu"></i>
+
+            </button>
+
+        </div>
+    </div>
+</header>
+
+<main id="main">
+
+    <!-- Hero Section -->
+
+    <section class="hero wrap">
+
+        <div class="hero2">
+
+            <div class="hero2__text">
+
+                <h1>Every experience deserves a home</h1>
+
+                <p class="lead">
+                    Keep your memories in folders of your own.
+                    Leave each one private, or share it with others when you are ready.
+                </p>
+
+                <div class="hero2__cta">
+
+                    <a class="btn btn--accent"
+                       href="{{ memory_edit_url|default:'#' }}">
+
+                        <i data-lucide="pencil"></i>
+                        Write a memory
+
+                    </a>
+
+                    <a class="btn btn--quiet"
+                       href="{{ explore_url|default:'#' }}">
+
+                        Discover stories
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="hero2__art">
+
+                <img class="hero-img--light"
+                     src="{% static 'img/hero-light.jpg' %}"
+                     alt="">
+
+                <img class="hero-img--dark"
+                     src="{% static 'img/hero-dark.jpg' %}"
+                     alt="">
+
+                <div class="hero__note">
+                    Varkaneh Village
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <div class="wrap">
+
+        <!-- Recently Shared -->
+
+        <section class="section">
+
+            <div class="section__head">
+
+                <div>
+                    <h2>Recently shared</h2>
+                </div>
+
+                <a class="more" href="{{ explore_url|default:'#' }}">
+                    All memories
+                    <i data-lucide="chevron-right"></i>
+                </a>
+
+            </div>
+
+            <div class="grid rail">
+
+                <article class="card"
+                         data-item
+                         data-cat="trips"
+                         data-city="Istanbul"
+                         data-type="guide"
+                         data-land="road"
+                         data-likes="311"
+                         data-date="20261015">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Istanbul in four days">
+
+                        <img src="{% static 'img/road.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Trips</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Istanbul
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Oct 15, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Guide
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Istanbul in four days
+                            </a>
+                        </h3>
+
+                        <p>
+                            A suggested route, transport, costs,
+                            and the hours when you can beat the crowds.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--b avatar--sm"
+                                  aria-hidden="true">P</span>
+                            Pooya Sadeghi
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="311">311</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            57
+                        </span>
+
+                    </div>
+
+                </article>
+
+                <article class="card"
+                         data-item
+                         data-cat="trips"
+                         data-city="Masuleh"
+                         data-type="story"
+                         data-land="village"
+                         data-likes="221"
+                         data-date="20261014">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Masuleh: mist and stairs">
+
+                        <img src="{% static 'img/village.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Trips</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Masuleh
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Oct 14, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Story
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Masuleh: mist and stairs
+                            </a>
+                        </h3>
+
+                        <p>
+                            One house's roof is the next house's courtyard.
+                            The mist stayed until noon and we were in no hurry.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--b avatar--sm"
+                                  aria-hidden="true">N</span>
+                            Negar Rezaei
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="221">221</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            27
+                        </span>
+
+                    </div>
+
+                </article>
+
+                <article class="card"
+                         data-item
+                         data-cat="nature"
+                         data-city="Ramsar"
+                         data-type="story"
+                         data-land="sea"
+                         data-likes="205"
+                         data-date="20261010">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Sunset on the Caspian">
+
+                        <img src="{% static 'img/sea.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Nature</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Ramsar
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Oct 10, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Story
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Sunset on the Caspian
+                            </a>
+                        </h3>
+
+                        <p>
+                            We sat on the shore for hours and just watched.
+                            Sometimes that is the best plan.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--sm"
+                                  aria-hidden="true">S</span>
+                            Sara Ahmadi
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="205">205</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            22
+                        </span>
+
+                    </div>
+
+                </article>
+
+                <article class="card"
+                         data-item
+                         data-cat="trips"
+                         data-city="Isfahan"
+                         data-type="story"
+                         data-land="town"
+                         data-likes="248"
+                         data-date="20261004">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Three days in Isfahan, from Naqsh-e Jahan to Si-o-se-pol">
+
+                        <img src="{% static 'img/town.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Trips</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Isfahan
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Oct 4, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Story
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Three days in Isfahan, from Naqsh-e Jahan to Si-o-se-pol
+                            </a>
+                        </h3>
+
+                        <p>
+                            We walked down Chahar Bagh at first light.
+                            The square was still quiet and the sun was catching the tiles.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--sm"
+                                  aria-hidden="true">S</span>
+                            Sara Ahmadi
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="248">248</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            31
+                        </span>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- Popular Experiences -->
+
+        <section class="section">
+
+            <div class="section__head">
+
+                <div>
+                    <h2>Popular experiences</h2>
+                    <p>Most loved, with thoughtful conversation</p>
+                </div>
+
+            </div>
+
+            <div class="featured rail">
+
+                <article class="card"
+                         data-item
+                         data-cat="trips"
+                         data-city="Istanbul"
+                         data-type="guide"
+                         data-land="road"
+                         data-likes="311"
+                         data-date="20261015">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Istanbul in four days">
+
+                        <img src="{% static 'img/road.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Trips</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Istanbul
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Oct 15, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Guide
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Istanbul in four days
+                            </a>
+                        </h3>
+
+                        <p>
+                            A suggested route, transport, costs,
+                            and the hours when you can beat the crowds.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--b avatar--sm"
+                                  aria-hidden="true">P</span>
+                            Pooya Sadeghi
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="311">311</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            57
+                        </span>
+
+                    </div>
+
+                </article>
+
+                <article class="card"
+                         data-item
+                         data-cat="nature"
+                         data-city="Damavand"
+                         data-type="guide"
+                         data-land="mountain"
+                         data-likes="289"
+                         data-date="20260830">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Climbing Damavand: a practical guide">
+
+                        <img src="{% static 'img/mountain.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Nature</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Damavand
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Aug 30, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Guide
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Climbing Damavand: a practical guide
+                            </a>
+                        </h3>
+
+                        <p>
+                            The route, the gear, day-by-day timing,
+                            and the mistakes I made so you don't have to.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--a avatar--sm"
+                                  aria-hidden="true">M</span>
+                            Mehdi Nouri
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="289">289</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            47
+                        </span>
+
+                    </div>
+
+                </article>
+
+                <article class="card"
+                         data-item
+                         data-cat="trips"
+                         data-city="Isfahan"
+                         data-type="story"
+                         data-land="town"
+                         data-likes="248"
+                         data-date="20261004">
+
+                    <a class="cover cover--43"
+                       href="{{ memory_url|default:'#' }}"
+                       aria-label="Three days in Isfahan, from Naqsh-e Jahan to Si-o-se-pol">
+
+                        <img src="{% static 'img/town.svg' %}"
+                             alt=""
+                             loading="lazy">
+
+                        <span class="chip">Trips</span>
+
+                    </a>
+
+                    <div class="card__text">
+
+                        <div class="card__meta">
+
+                            <span class="it">
+                                <i data-lucide="map-pin"></i>
+                                Isfahan
+                            </span>
+
+                            <span class="it">
+                                <i data-lucide="calendar"></i>
+                                Oct 4, 2026
+                            </span>
+
+                            <span class="chip chip--olive">
+                                Story
+                            </span>
+
+                        </div>
+
+                        <h3>
+                            <a href="{{ memory_url|default:'#' }}">
+                                Three days in Isfahan, from Naqsh-e Jahan to Si-o-se-pol
+                            </a>
+                        </h3>
+
+                        <p>
+                            We walked down Chahar Bagh at first light.
+                            The square was still quiet and the sun was catching the tiles.
+                        </p>
+
+                    </div>
+
+                    <div class="card__foot">
+
+                        <span class="by">
+                            <span class="avatar avatar--sm"
+                                  aria-hidden="true">S</span>
+                            Sara Ahmadi
+                        </span>
+
+                        <button class="like-btn"
+                                type="button"
+                                data-like
+                                aria-pressed="false"
+                                aria-label="Like">
+
+                            <i data-lucide="heart"></i>
+                            <span data-n="248">248</span>
+
+                        </button>
+
+                        <span class="stat">
+                            <i data-lucide="message-circle"></i>
+                            31
+                        </span>
+
+                    </div>
+
+                </article>
+
+            </div>
+
+        </section>
+
+        <!-- Explore Places -->
+
+        <section class="section">
+
+            <div class="section__head">
+
+                <div>
+                    <h2>Explore places</h2>
+                    <p>By landscape or by city</p>
+                </div>
+
+                <a class="more" href="{{ explore_url|default:'#' }}">
+                    All destinations
+                    <i data-lucide="chevron-right"></i>
+                </a>
+
+            </div>
+
+            <div class="places">
+
+                <a class="place"
+                   href="{{ explore_url|default:'#' }}?landscape=mountain">
+
+                    <img src="{% static 'img/mountain.svg' %}"
+                         alt=""
+                         loading="lazy">
+
+                    <div>
+                        <b>Mountains</b>
+                        <small>34 memories</small>
+                    </div>
+
+                </a>
+
+                <a class="place"
+                   href="{{ explore_url|default:'#' }}?landscape=sea">
+
+                    <img src="{% static 'img/sea.svg' %}"
+                         alt=""
+                         loading="lazy">
+
+                    <div>
+                        <b>Sea</b>
+                        <small>27 memories</small>
+                    </div>
+
+                </a>
+
+                <a class="place"
+                   href="{{ explore_url|default:'#' }}?landscape=forest">
+
+                    <img src="{% static 'img/forest.svg' %}"
+                         alt=""
+                         loading="lazy">
+
+                    <div>
+                        <b>Forest</b>
+                        <small>22 memories</small>
+                    </div>
+
+                </a>
+
+                <a class="place"
+                   href="{{ explore_url|default:'#' }}?landscape=desert">
+
+                    <img src="{% static 'img/desert.svg' %}"
+                         alt=""
+                         loading="lazy">
+
+                    <div>
+                        <b>Desert</b>
+                        <small>15 memories</small>
+                    </div>
+
+                </a>
+
+            </div>
+
+            <div class="citychips">
+
+                <a class="citychip"
+                   href="{{ explore_url|default:'#' }}?city=Isfahan">
+
+                    <img src="{% static 'img/town.svg' %}" alt="">
+
+                    <span>
+                        <b>Isfahan</b>
+                        <small>18 memories</small>
+                    </span>
+
+                </a>
+
+                <a class="citychip"
+                   href="{{ explore_url|default:'#' }}?city=Yazd">
+
+                    <img src="{% static 'img/desert.svg' %}" alt="">
+
+                    <span>
+                        <b>Yazd</b>
+                        <small>12 memories</small>
+                    </span>
+
+                </a>
+
+                <a class="citychip"
+                   href="{{ explore_url|default:'#' }}?city=Masuleh">
+
+                    <img src="{% static 'img/village.svg' %}" alt="">
+
+                    <span>
+                        <b>Masuleh</b>
+                        <small>9 memories</small>
+                    </span>
+
+                </a>
+
+                <a class="citychip"
+                   href="{{ explore_url|default:'#' }}?city=Istanbul">
+
+                    <img src="{% static 'img/road.svg' %}" alt="">
+
+                    <span>
+                        <b>Istanbul</b>
+                        <small>21 memories</small>
+                    </span>
+
+                </a>
+
+                <a class="citychip"
+                   href="{{ explore_url|default:'#' }}?city=Tbilisi">
+
+                    <img src="{% static 'img/camp.svg' %}" alt="">
+
+                    <span>
+                        <b>Tbilisi</b>
+                        <small>8 memories</small>
+                    </span>
+
+                </a>
+
+                <a class="citychip"
+                   href="{{ explore_url|default:'#' }}?city=Rasht">
+
+                    <img src="{% static 'img/forest.svg' %}" alt="">
+
+                    <span>
+                        <b>Rasht</b>
+                        <small>6 memories</small>
+                    </span>
+
+                </a>
+
+            </div>
+
+        </section>
+
+        <!-- Stories From Community -->
+
+        <section class="section">
+
+            <div class="section__head">
+                <div>
+                    <h2>Stories from the community</h2>
+                </div>
+            </div>
+
+            <div class="editorial">
+
+                <article class="story-big">
+
+                    <a class="cover cover--169"
+                       href="{{ memory_url|default:'#' }}">
+
+                        <img src="{% static 'img/forest.svg' %}"
+                             alt="">
+
+                    </a>
+
+                    <div class="card__meta">
+
+                        <span class="chip chip--olive">
+                            Personal story
+                        </span>
+
+                        <span class="it">
+                            <i data-lucide="map-pin"></i>
+                            Golestan
+                        </span>
+
+                    </div>
+
+                    <h3>
+                        <a href="{{ memory_url|default:'#' }}">
+                            A night in the cloud forest
+                        </a>
+                    </h3>
+
+                    <p>
+                        Mist rose between the trees. All night there was only rain
+                        and the smell of earth. This is the story of that night,
+                        with a short guide for anyone who wants to go.
+                    </p>
+
+                </article>
+
+                <div class="story-list">
+
+                    <article class="story-row">
+
+                        <a class="cover"
+                           href="{{ memory_url|default:'#' }}">
+
+                            <img src="{% static 'img/mountain.svg' %}"
+                                 alt="">
+
+                        </a>
+
+                        <div>
+
+                            <span class="chip chip--accent">
+                                Practical guide
+                            </span>
+
+                            <h3>
+                                <a href="{{ memory_url|default:'#' }}">
+                                    Climbing Damavand: a practical guide
+                                </a>
+                            </h3>
+
+                            <p>
+                                The route, the gear, day-by-day timing,
+                                and the mistakes I made so you don't have to.
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                    <article class="story-row">
+
+                        <a class="cover"
+                           href="{{ memory_url|default:'#' }}">
+
+                            <img src="{% static 'img/road.svg' %}"
+                                 alt="">
+
+                        </a>
+
+                        <div>
+
+                            <span class="chip chip--accent">
+                                Practical guide
+                            </span>
+
+                            <h3>
+                                <a href="{{ memory_url|default:'#' }}">
+                                    Istanbul in four days
+                                </a>
+                            </h3>
+
+                            <p>
+                                A suggested route, transport, costs,
+                                and the hours when you can beat the crowds.
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                    <article class="story-row">
+
+                        <a class="cover"
+                           href="{{ memory_url|default:'#' }}">
+
+                            <img src="{% static 'img/desert.svg' %}"
+                                 alt="">
+
+                        </a>
+
+                        <div>
+
+                            <span class="chip chip--accent">
+                                Practical guide
+                            </span>
+
+                            <h3>
+                                <a href="{{ memory_url|default:'#' }}">
+                                    Yazd, the city of wind towers
+                                </a>
+                            </h3>
+
+                            <p>
+                                A two-day plan, the best hours to visit,
+                                and the spots worth a tea break.
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- Invite Section -->
+
+        <section class="invite">
+
+            <div>
+
+                <h2>Write your first memory</h2>
+
+                <p>
+                    Create a folder, add a few photos and write.
+                    Make it public whenever you want.
+                </p>
+
+            </div>
+
+            <a class="btn" href="{{ memory_edit_url|default:'#' }}">
+                <i data-lucide="plus"></i>
+                New memory
+            </a>
+
+        </section>
+
+    </div>
+
+</main>
+
+<!-- Footer -->
+
+<footer class="site-footer">
+
+    <div class="wrap">
+
+        <span>
+            Safarnameh — every memory has a home.
+        </span>
+
+        <span>
+
+            <a href="{{ explore_url|default:'#' }}">
+                Explore
+            </a>
+
+            ·
+
+            <a href="{{ settings_url|default:'#' }}">
+                Privacy
+            </a>
+
+            ·
+
+            <a href="{{ login_url|default:'#' }}">
+                Log in
+            </a>
+
+        </span>
+
+    </div>
+
+</footer>
+
+<script src="{% static 'vendor/lucide.min.js' %}"></script>
+<script src="{% static 'js/main.js' %}"></script>
+
+</body>
+</html>
