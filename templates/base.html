@@ -1,105 +1,127 @@
-{% load static %}
-
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-
-<title>Log in | Safarnameh</title>
-
-<script>
-try {
-    var m = localStorage.getItem('sf-mode') ||
-        (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-
-    document.documentElement.dataset.mode = m;
-} catch(e) {
-    document.documentElement.dataset.mode = 'light';
-}
-</script>
-
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>{% block title %}Safarnameh{% endblock %}</title>
+    <script>
+        try {
+            var m = localStorage.getItem('sf-mode') ||
+                (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+            document.documentElement.dataset.mode = m;
+        } catch (e) {
+            document.documentElement.dataset.mode = 'light';
+        }
+    </script>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    {% block extra_head %}{% endblock %}
 </head>
+<body>
 
-<!-- Main Content -->
-{% block main %}
+{% block header %}
+    {% url 'explore' as explore_url %}
+    {% url 'journal' as journal_url %}
+    {% url 'notifications' as notifications_url %}
+    <a class="skip" href="#main">Skip to content</a>
 
-{% endblock %}
-<!-- Main Content End -->
+    <header class="site-header">
+        <div class="wrap">
 
+            <a class="logo" href="{% url 'index' %}">
+                <svg viewBox="0 0 32 32" aria-hidden="true">
+                    <rect width="32" height="32" rx="9" style="fill:var(--primary)"/>
+                    <path d="M6 10l6-2 8 2 6-2v14l-6 2-8-2-6 2z" style="fill:var(--on-primary)"/>
+                    <path d="M12 8v14M20 10v14" style="stroke:var(--primary)" stroke-width="1.2"/>
+                    <circle cx="21" cy="14" r="2.6" style="fill:var(--accent)"/>
+                </svg>
+                Safarnameh
+            </a>
 
-<!-- Footer Start -->
-<div class="container-fluid bg-dark text-secondary mt-5 pt-5">
+            <nav class="nav" aria-label="Main">
+                <a href="{% url 'index' %}"{% if request.resolver_match.url_name == 'index' %}
+                   aria-current="page"{% endif %}>Discover</a>
+                <a href="{{ explore_url|default:'#' }}"{% if request.resolver_match.url_name == 'explore' %}
+                   aria-current="page"{% endif %}>Explore destinations</a>
+                <a href="{{ journal_url|default:'#' }}"{% if request.resolver_match.url_name == 'journal' %}
+                   aria-current="page"{% endif %}>My journal</a>
+            </nav>
 
-    <div class="row px-xl-5 pt-5">
+            <div class="header-tools">
 
-        <div class="col-lg-4 col-md-12 mb-5">
-
-            <h5 class="text-secondary text-uppercase mb-4">
-                Get In Touch
-            </h5>
-
-            <p class="mb-4">
-                MultiShop online store.
-            </p>
-
-            <p class="mb-2">
-                <i class="fa fa-map-marker-alt text-primary mr-3"></i>
-                123 Street, New York, USA
-            </p>
-
-            <p class="mb-2">
-                <i class="fa fa-envelope text-primary mr-3"></i>
-                info@example.com
-            </p>
-
-            <p class="mb-0">
-                <i class="fa fa-phone-alt text-primary mr-3"></i>
-                +012 345 67890
-            </p>
-
-        </div>
-
-    </div>
-
-    <div class="row border-top mx-xl-5 py-4"
-         style="border-color: rgba(256, 256, 256, .1) !important;">
-
-        <div class="col-md-6 px-xl-0">
-
-            <p class="mb-md-0 text-center text-md-left text-secondary">
-
-                &copy;
-                <a class="text-primary" href="#">
-                    MultiShop
+                <a class="hsearch" href="{{ explore_url|default:'#' }}#search">
+                    <i data-lucide="search"></i> Search memories…
                 </a>
 
-                All Rights Reserved.
+                <button class="icon-btn theme-btn" type="button" data-theme-toggle
+                        aria-label="Toggle light / dark mode">
+                    <span class="moon"><i data-lucide="moon"></i></span>
+                    <span class="sun"><i data-lucide="sun"></i></span>
+                </button>
 
-            </p>
+                {% if request.user.is_authenticated %}
 
+                    <a class="icon-btn" href="{{ notifications_url|default:'#' }}" aria-label="Notifications">
+                        <i data-lucide="bell"></i><span class="dot"></span>
+                    </a>
+
+                    <details class="menu">
+                        <summary class="user-chip" aria-label="Account menu">
+                            {% if request.user.image %}
+                                <img class="avatar avatar--sm" src="{{ request.user.image.url }}" alt="">
+                            {% else %}
+                                <span class="avatar avatar--sm">{{ request.user.full_name|first|default:"U" }}</span>
+                            {% endif %}
+                            <span class="user-chip__name">{{ request.user.full_name }}</span>
+                        </summary>
+                        <div class="menu__panel">
+                            <a href="{% url 'account:edit' %}"><i data-lucide="settings"></i> Settings &amp; privacy</a>
+                            <hr>
+                            <form method="post" action="{% url 'account:logout' %}">
+                                {% csrf_token %}
+                                <button type="submit"><i data-lucide="log-out"></i> Log out</button>
+                            </form>
+                        </div>
+                    </details>
+
+                {% else %}
+
+                    <a class="btn btn--quiet btn--sm" href="{% url 'account:login' %}">Log in</a>
+                    <a class="btn btn--sm" href="{% url 'account:register' %}">Sign up</a>
+
+                {% endif %}
+
+                <button class="icon-btn nav-toggle" type="button" data-nav-toggle
+                        aria-expanded="false" aria-label="Menu">
+                    <i data-lucide="menu"></i>
+                </button>
+
+            </div>
         </div>
+    </header>
+{% endblock %}
 
-    </div>
+{% block content %}{% endblock %}
 
-</div>
-<!-- Footer End -->
+{% block footer %}
+    {% url 'explore' as explore_url %}
+    <footer class="site-footer">
+        <div class="wrap">
+            <span>Safarnameh — every memory has a home.</span>
+            <span>
+            <a href="{{ explore_url|default:'#' }}">Explore</a>
+                {% if request.user.is_authenticated %}
+                    · <a href="{% url 'account:edit' %}">Privacy</a>
+                {% else %}
+                    · <a href="{% url 'account:login' %}">Log in</a>
+                {% endif %}
+        </span>
+        </div>
+    </footer>
+{% endblock %}
 
-
-<a href="#" class="btn btn-primary back-to-top">
-    <i class="fa fa-angle-double-up"></i>
-</a>
-
-
-<script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.bundle.min.js"></script>
-
-<script src="{% static 'lib/easing/easing.min.js' %}"></script>
-<script src="{% static 'lib/owlcarousel/owl.carousel.min.js' %}"></script>
-
+<script src="{% static 'vendor/lucide.min.js' %}"></script>
 <script src="{% static 'js/main.js' %}"></script>
-
+{% block extra_js %}{% endblock %}
 </body>
 </html>

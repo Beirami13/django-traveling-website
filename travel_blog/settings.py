@@ -54,6 +54,9 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+AUTH_USER_MODEL = 'account.User'
+LOGIN_URL = 'account:login'
+
 ROOT_URLCONF = 'travel_blog.urls'
 
 TEMPLATES = [
@@ -120,7 +123,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
-STATIC_URL = 'statics/'
+STATIC_URL = '/statics/'
 
 
 # Email
@@ -132,7 +135,7 @@ MAILERS = {
     },
 }
 
-MEDIA_URL = 'media/'
+MEDIA_URL = '/media/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'statics')]
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

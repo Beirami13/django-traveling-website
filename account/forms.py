@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from django.contrib.auth.forms import ReadOnlyPasswordHashField
 
 from .validator import phone
-from .models import User, Address
+from .models import User
 
 
 class UserCreationForm(forms.ModelForm):
@@ -157,12 +157,6 @@ class CheckOtpForm(forms.Form):
         })
     )
 
-
-class AddressCreationForm(forms.ModelForm):
-
-    class Meta:
-        model = Address
-        fields = ["city", "address", "zip_code"]
 
 
 class CreateProfileForm(forms.Form):
