@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications | Safarnameh{% endblock %}
+
+{% block content %}
+
+<main id="main" class="wrap" style="max-width:780px">
+
+    <div class="page-head">
+        <div class="folder-head">
+            <h1>Notifications</h1>
+
+            <button class="btn btn--quiet btn--sm"
+                    type="button"
+                    data-mark-read>
+                <i data-lucide="check-check"></i>
+                Mark all as read
+            </button>
+        </div>
+    </div>
+
+
+    <div class="tabs" data-tabs="#notes">
+
+        <button type="button" data-kind="" aria-selected="true">
+            All
+        </button>
+
+        <button type="button" data-kind="question" aria-selected="false">
+            Questions
+        </button>
+
+        <button type="button" data-kind="comment" aria-selected="false">
+            Comments
+        </button>
+
+        <button type="button" data-kind="like" aria-selected="false">
+            Likes
+        </button>
+
+    </div>
+
+
+    <div id="notes">
+
+        <!-- Today -->
+        <div class="group-title">Today</div>
+
+        <div class="notes">
+
+            <div class="note is-unread" data-kind="question">
+
+                <span class="note__icon">
+                    <i data-lucide="circle-help"></i>
+                </span>
+
+                <div class="note__body">
+                    <p>
+                        <b>Mehdi</b> asked a question on
+                        “Three days in Isfahan”.
+                    </p>
+
+                    <time>2 hours ago</time>
+                </div>
+
+                <span class="unread-dot"></span>
+
+            </div>
+
+
+            <div class="note is-unread" data-kind="like">
+
+                <span class="note__icon">
+                    <i data-lucide="heart"></i>
+                </span>
+
+                <div class="note__body">
+                    <p>
+                        <b>Negar</b> and 12 others liked
+                        “Masuleh: mist and stairs”.
+                    </p>
+
+                    <time>5 hours ago</time>
+                </div>
+
+                <span class="unread-dot"></span>
+
+            </div>
+
+        </div>
+
+
+        <!-- Earlier -->
+        <div class="group-title">Earlier</div>
+
+        <div class="notes">
+
+            <div class="note" data-kind="comment">
+
+                <span class="note__icon note__icon--olive">
+                    <i data-lucide="message-circle"></i>
+                </span>
+
+                <div class="note__body">
+                    <p>
+                        <b>Ali</b> commented on
+                        “Sunset on the Caspian”.
+                    </p>
+
+                    <time>Yesterday</time>
+                </div>
+
+            </div>
+
+
+            <div class="note" data-kind="question">
+
+                <span class="note__icon note__icon--olive">
+                    <i data-lucide="circle-help"></i>
+                </span>
+
+                <div class="note__body">
+                    <p>
+                        <b>Pooya</b> replied to your question on
+                        “Istanbul in four days”.
+                    </p>
+
+                    <time>3 days ago</time>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Empty state -->
+    <div class="empty" data-tab-empty hidden>
+
+        <i data-lucide="bell-off"></i>
+
+        <h3>No notifications</h3>
+
+        <p>
+            When someone reacts to your memories,
+            you will see it here.
+        </p>
+
+    </div>
+
+</main>
+
+{% endblock %}

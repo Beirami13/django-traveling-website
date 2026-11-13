@@ -9,4 +9,7 @@ urlpatterns = [
     path('check', views.CheckOtpView.as_view(), name='check_otp'),
     path('logout', views.UserLogout, name='logout'),
     path("edit", views.edit_profile, name="edit"),
+    path("delete", views.DeleteUser, name="delete"),
+path("notifications/",views.notifications,name="notifications"),
+path('privacy/', views.privacy_settings, name='privacy_settings'),
 ]

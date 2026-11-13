@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+{% load static l10n %}
+
+{% block title %}{{ memory.title }} | Safarnameh{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+{% endblock %}
+
+{% block content %}
+    <main id="main" class="wrap">
+
+        {# ---------- Owner bar (only for the author) ---------- #}
+        {% if request.user == memory.author %}
+            <div class="owner-bar">
+                <i data-lucide="eye"></i>
+                <b>Only visible to you:</b>
+                {% if memory.folder %}
+                    Folder:
+                    {% if memory.folder.parent %}{{ memory.folder.parent.name }} / {% endif %}{{ memory.folder.name }}
+                {% endif %}
+                {% if memory.visibility == 'public' %}
+                    <span class="chip chip--olive"><i data-lucide="globe"></i> Public</span>
+                {% else %}
+                    <span class="chip"><i data-lucide="lock"></i> Private</span>
+                {% endif %}
+                <span class="sp">
+                    <a class="btn btn--quiet btn--sm" href="{% url 'memory_edit' memory.pk %}">
+                        <i data-lucide="pencil"></i> Edit
+                    </a>
+                    <button class="btn btn--danger btn--sm" type="button" data-open-dialog="confirm-delete">
+                        <i data-lucide="trash-2"></i> Delete
+                    </button>
+                </span>
+            </div>
+        {% endif %}
+
+        {# ---------- Header ---------- #}
+        <header class="article-head">
+            <div class="card__meta">
+                {% for c in memory.category.all %}
+                    <span class="chip">{{ c.name }}</span>
+                {% endfor %}
+            </div>
+            <h1>{{ memory.title }}</h1>
+            <div class="byline">
+                <span class="who">
+                    {% if memory.author.image %}
+                        <img class="avatar" src="{{ memory.author.image.url }}" alt="">
+                    {% else %}
+                        <span class="avatar" aria-hidden="true">{{ memory.author.full_name|first|default:"U" }}</span>
+                    {% endif %}
+                    {{ memory.author.full_name }}
+                </span>
+                <span class="it"><i data-lucide="calendar"></i> {{ memory.created_at|date:"M j, Y" }}</span>
+                {% if memory.location or memory.city %}
+                    <span class="it">
+                        <i data-lucide="map-pin"></i>
+                        {{ memory.location }}{% if memory.location and memory.city %}, {% endif %}{{ memory.city }}{% if memory.country %}, {{ memory.country }}{% endif %}
+                    </span>
+                {% endif %}
+            </div>
+        </header>
+
+        {# ---------- Cover ---------- #}
+        {% with cover=memory.cover %}
+            <div class="article-cover">
+                {% if cover and cover.media_type == 'image' %}
+                    <img src="{{ cover.file.url }}" alt="{{ cover.caption }}">
+                {% else %}
+                    <img src="{% static 'img/town.svg' %}" alt="">
+                {% endif %}
+            </div>
+        {% endwith %}
+
+        <div class="article-grid">
+            <article>
+
+                {# ---------- Story ---------- #}
+                <div class="prose">
+                    {{ memory.story|linebreaks }}
+
+                    {% for m in memory.media.all %}
+                        {% if m.media_type == 'video' %}
+                            <figure>
+                                <video controls preload="metadata" style="width:100%">
+                                    <source src="{{ m.file.url }}">
+                                </video>
+                                {% if m.caption %}<figcaption>{{ m.caption }}</figcaption>{% endif %}
+                            </figure>
+                        {% endif %}
+                    {% endfor %}
+
+                    <div class="gallery">
+                        {% for m in memory.media.all %}
+                            {% if m.media_type == 'image' %}
+                                <button type="button" data-zoom="{{ m.file.url }}" data-alt="{{ m.caption }}">
+                                    <img src="{{ m.file.url }}" alt="{{ m.caption }}" loading="lazy">
+                                </button>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+
+                {# ---------- Like / counts ---------- #}
+                <div class="actions-bar">
+                    {% if request.user.is_authenticated %}
+                        <form method="post" action="" style="display:inline">
+                            {% csrf_token %}
+                            <button class="like-btn" type="submit" aria-pressed="{% if user_liked %}true{% else %}false{% endif %}">
+                                <i data-lucide="heart"></i> <span>{{ like_count }}</span>
+                            </button>
+                        </form>
+                    {% else %}
+                        <a class="like-btn" href="{% url 'account:login' %}?next={{ request.path }}">
+                            <i data-lucide="heart"></i> <span>{{ like_count }}</span>
+                        </a>
+                    {% endif %}
+                    <span class="stat">
+                        <i data-lucide="message-circle"></i>
+                    </span>
+                </div>
+
+                {# ---------- Comments & questions ---------- #}
+                <section class="comments">
+                    <h2><i data-lucide="messages-square"></i> Comments &amp; questions</h2>
+
+                    <div class="tabs" data-tabs="#comment-list" role="tablist">
+                        <button type="button" data-kind="" aria-selected="true">All</button>
+                        <button type="button" data-kind="question" aria-selected="false">Questions</button>
+                        <button type="button" data-kind="comment" aria-selected="false">Comments</button>
+                    </div>
+
+                    {% if request.user.is_authenticated %}
+                        <form class="compose" method="post" action="">
+                            {% csrf_token %}
+                            <div class="field" style="margin:0">
+                                <label class="sr-only" for="ct">Text</label>
+                                <textarea id="ct" name="context" rows="3" required
+                                          placeholder="Write a comment or ask a question…"></textarea>
+                            </div>
+                            <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+                                <label><input type="radio" name="kind" value="comment" checked> Comment</label>
+                                <label><input type="radio" name="kind" value="question"> Question</label>
+                                <button class="btn btn--sm" type="submit" style="margin-inline-start:auto">Post</button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <p class="muted">
+                            <a href="{% url 'account:login' %}?next={{ request.path }}">Log in</a>
+                            to comment or ask a question.
+                        </p>
+                    {% endif %}
+
+                    <div id="comment-list">
+
+                        {# Questions: anyone asks, only the author answers #}
+                        {% for q in questions %}
+                            <div class="comment" data-kind="question">
+                                {% if q.author.image %}
+                                    <img class="avatar avatar--sm" src="{{ q.author.image.url }}" alt="">
+                                {% else %}
+                                    <span class="avatar avatar--a avatar--sm" aria-hidden="true">{{ q.author.full_name|first|default:"U" }}</span>
+                                {% endif %}
+                                <div class="comment__body">
+                                    <div class="comment__meta">
+                                        <b>{{ q.author.full_name }}</b>
+                                        <span class="chip chip--accent">Question</span>
+                                        <span class="muted">{{ q.date|timesince }} ago</span>
+                                    </div>
+                                    <p>{{ q.context }}</p>
+
+                                    {% for a in q.answers.all %}
+                                        <div class="reply">
+                                            <b>{{ a.author.full_name }} (author)</b>
+                                            <p>{{ a.context }}</p>
+                                        </div>
+                                    {% endfor %}
+
+                                    {% if request.user == memory.author %}
+                                        <form method="post" action="{% url 'answer_question' q.pk %}">
+                                            {% csrf_token %}
+                                            <div class="field" style="margin:.5rem 0">
+                                                <label class="sr-only" for="ans-{{ q.pk }}">Your answer</label>
+                                                <textarea id="ans-{{ q.pk }}" name="context" rows="2" required
+                                                          placeholder="Answer this question…"></textarea>
+                                            </div>
+                                            <button class="btn btn--sm" type="submit">Reply</button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+
+                        {# Comments (top-level only, replies nested) #}
+                        {% for c in comments %}
+                            <div class="comment" data-kind="comment">
+                                {% if c.author.image %}
+                                    <img class="avatar avatar--sm" src="{{ c.author.image.url }}" alt="">
+                                {% else %}
+                                    <span class="avatar avatar--b avatar--sm" aria-hidden="true">{{ c.author.full_name|first|default:"U" }}</span>
+                                {% endif %}
+                                <div class="comment__body">
+                                    <div class="comment__meta">
+                                        <b>{{ c.author.full_name }}</b>
+                                        <span class="muted">{{ c.date|timesince }} ago</span>
+                                    </div>
+                                    <p>{{ c.context }}</p>
+
+                                    {% for r in c.replies.all %}
+                                        <div class="reply">
+                                            <b>{{ r.author.full_name }}</b>
+                                            <p>{{ r.context }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {% if not questions and not comments %}
+                        <p class="muted">Nothing here yet.</p>
+                    {% endif %}
+                    <p class="muted" data-tab-empty hidden>Nothing here yet.</p>
+                </section>
+            </article>
+
+            <aside>
+                {# ---------- Location ---------- #}
+                {% if memory.has_location %}
+                    <section class="panel">
+                        <h3><i data-lucide="map-pin"></i> Location</h3>
+
+                        <div class="map" data-map data-marker
+                             data-lat="{{ memory.latitude|unlocalize }}"
+                             data-lng="{{ memory.longitude|unlocalize }}"
+                             data-zoom="13">
+                            The map appears when you are online.
+                        </div>
+
+                        <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">
+                            <a class="btn btn--quiet btn--sm" href="{{ memory.geo_uri }}">
+                                <i data-lucide="navigation"></i> Open in map app
+                            </a>
+                            <a class="btn btn--quiet btn--sm" target="_blank" rel="noopener"
+                               href="https://www.google.com/maps/search/?api=1&query={{ memory.latitude|unlocalize }},{{ memory.longitude|unlocalize }}">
+                                Google Maps
+                            </a>
+                            <a class="btn btn--quiet btn--sm" target="_blank" rel="noopener"
+                               href="https://waze.com/ul?ll={{ memory.latitude|unlocalize }},{{ memory.longitude|unlocalize }}&navigate=yes">
+                                Waze
+                            </a>
+                        </div>
+                    </section>
+                {% endif %}
+            </aside>
+        </div>
+
+        {# ---------- Related memories ---------- #}
+        {% if related %}
+            <section class="related">
+                <div class="section__head"><h2>Related memories</h2></div>
+                <div class="grid">
+                    {% for r in related %}
+                        {% with rc=r.cover %}
+                            <article class="card">
+                                <a class="cover cover--43" href="{% url 'memory_detail' r.pk %}" aria-label="{{ r.title }}">
+                                    {% if rc and rc.media_type == 'image' %}
+                                        <img src="{{ rc.file.url }}" alt="" loading="lazy">
+                                    {% else %}
+                                        <img src="{% static 'img/town.svg' %}" alt="" loading="lazy">
+                                    {% endif %}
+                                    {% with first_cat=r.category.all|first %}
+                                        {% if first_cat %}<span class="chip">{{ first_cat.name }}</span>{% endif %}
+                                    {% endwith %}
+                                </a>
+                                <div class="card__text">
+                                    <div class="card__meta">
+                                        {% if r.city %}<span class="it"><i data-lucide="map-pin"></i> {{ r.city }}</span>{% endif %}
+                                        <span class="it"><i data-lucide="calendar"></i> {{ r.created_at|date:"M j, Y" }}</span>
+                                    </div>
+                                    <h3><a href="{% url 'memory_detail' r.pk %}">{{ r.title }}</a></h3>
+                                    <p>{{ r.story|truncatewords:20 }}</p>
+                                </div>
+                                <div class="card__foot">
+                                    <span class="by">
+                                        <span class="avatar avatar--b avatar--sm" aria-hidden="true">{{ r.author.full_name|first|default:"U" }}</span>
+                                        {{ r.author.full_name }}
+                                    </span>
+                                    <span class="stat"><i data-lucide="heart"></i> {{ r.likes.count }}</span>
+                                    <span class="stat"><i data-lucide="message-circle"></i> {{ r.comments.count }}</span>
+                                </div>
+                            </article>
+                        {% endwith %}
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </main>
+
+    {# ---------- Dialogs ---------- #}
+    <dialog class="lightbox" id="lightbox">
+        <button class="icon-btn" type="button" data-close-dialog aria-label="Close"><i data-lucide="x"></i></button>
+        <img src="" alt="">
+    </dialog>
+
+    {% if request.user == memory.author %}
+        <dialog id="confirm-delete" aria-labelledby="cd-t">
+            <form method="post" action="{% url 'memory_delete' memory.pk %}">
+                {% csrf_token %}
+                <h2 id="cd-t">Delete this memory?</h2>
+                <p class="muted">This cannot be undone and everything inside will be removed too.</p>
+                <div class="actions">
+                    <button class="btn btn--quiet" type="button" data-close-dialog>Cancel</button>
+                    <button class="btn btn--danger" type="submit"><i data-lucide="trash-2"></i> Yes, delete</button>
+                </div>
+            </form>
+        </dialog>
+    {% endif %}
+{% endblock %}
+
+{% block vendor_js %}
+    <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+{% endblock %}

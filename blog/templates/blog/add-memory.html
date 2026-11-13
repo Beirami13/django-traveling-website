@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% load static l10n %}
+
+{% block title %}{% if form.instance.pk %}Edit memory{% else %}New memory{% endif %} | Safarnameh{% endblock %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'vendor/leaflet/leaflet.css' %}">
+    <style>
+        .story-input {
+            width: 100%;
+            min-height: 22rem;
+            padding: 1rem;
+            font: inherit;
+            line-height: 1.7;
+            color: inherit;
+            background: transparent;
+            border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+            border-radius: .75rem;
+            resize: vertical;
+        }
+    </style>
+{% endblock %}
+
+{# The editor has its own top bar instead of the site header #}
+{% block header %}
+    <div class="editor-bar">
+        <div class="wrap">
+            <a class="icon-btn"
+               href="{% if form.instance.pk %}{% url 'memory_detail' form.instance.pk %}{% else %}{% url 'index' %}{% endif %}"
+               aria-label="Back">
+                <i data-lucide="arrow-left"></i>
+            </a>
+            <button class="btn btn--sm" type="submit" form="memory-form" style="margin-inline-start:auto">
+                <i data-lucide="send"></i> <span>{% if form.instance.pk %}Save changes{% else %}Save memory{% endif %}</span>
+            </button>
+        </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <main id="main" class="wrap">
+
+        <form id="memory-form" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="form-errors">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="editor">
+
+                {# ---------- Main column ---------- #}
+                <div>
+                    <label class="sr-only" for="{{ form.title.id_for_label }}">Title</label>
+                    {{ form.title }}
+                    {% for error in form.title.errors %}<small class="error">{{ error }}</small>{% endfor %}
+
+                    <label class="sr-only" for="{{ form.story.id_for_label }}">Memory text</label>
+                    <div style="margin-top:1rem">
+                        {{ form.story }}
+                    </div>
+                    {% for error in form.story.errors %}<small class="error">{{ error }}</small>{% endfor %}
+
+                    <p class="muted small" style="margin-top:.8rem">
+                        <i data-lucide="lightbulb"></i>
+                        Write your personal story here. Start with whatever you remember most.
+                    </p>
+                </div>
+
+                {# ---------- Sidebar ---------- #}
+                <aside>
+
+                    <details class="side-section" open>
+                        <summary><i data-lucide="image"></i> Photos &amp; video</summary>
+                        <div class="side-section__body">
+                            <div class="dropzone" data-upload="thumbs" tabindex="0" role="button">
+                                <i data-lucide="upload"></i>
+                                <b>Drop files or click to upload</b>
+                                <small>Photos and video</small>
+                                <input type="file" name="media_files" accept="image/*,video/*" multiple>
+                            </div>
+                            <div class="thumbs" id="thumbs"></div>
+                        </div>
+                    </details>
+
+                    <details class="side-section" open>
+                        <summary><i data-lucide="folder"></i> Category &amp; folder</summary>
+                        <div class="side-section__body">
+                            <div class="field">
+                                <label for="{{ form.folder.id_for_label }}">Save in</label>
+
+                                {% for error in form.folder.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                            </div>
+                            <div class="field" style="margin:0">
+                                <label for="{{ form.category.id_for_label }}">Categories</label>
+
+                                <small class="muted">Hold Ctrl (Cmd on Mac) to select several.</small>
+                                {% for error in form.category.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="side-section" open>
+                        <summary><i data-lucide="map-pin"></i> Location</summary>
+                        <div class="side-section__body">
+                            <div class="field">
+                                <label for="{{ form.location.id_for_label }}">Place name</label>
+                                {{ form.location }}
+                                {% for error in form.location.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                            </div>
+                            <div class="field">
+                                <label for="{{ form.city.id_for_label }}">City</label>
+                                {{ form.city }}
+                            </div>
+                            <div class="field">
+                                <label for="{{ form.country.id_for_label }}">Country</label>
+                                {{ form.country }}
+                            </div>
+
+                            <div class="map pick-map" data-map data-pick
+                                 {% if form.latitude.value and form.longitude.value %}
+                                     data-marker
+                                     data-lat="{{ form.latitude.value|unlocalize }}"
+                                     data-lng="{{ form.longitude.value|unlocalize }}"
+                                     data-zoom="13"
+                                 {% else %}
+                                     data-lat="32.4" data-lng="53.7" data-zoom="5"
+                                 {% endif %}>
+                                Click the map to set a pin
+                            </div>
+
+                            <input type="hidden" id="lat" name="latitude"
+                                   value="{{ form.latitude.value|default_if_none:''|unlocalize }}">
+                            <input type="hidden" id="lng" name="longitude"
+                                   value="{{ form.longitude.value|default_if_none:''|unlocalize }}">
+
+                            {% for error in form.latitude.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                            {% for error in form.longitude.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                        </div>
+                    </details>
+
+                    <details class="side-section" open>
+                        <summary><i data-lucide="shield-check"></i> Visibility</summary>
+                        <div class="side-section__body" style="display:grid;gap:.6rem">
+                            <label class="choice">
+                                <input type="radio" name="visibility" value="private"
+                                       {% if form.visibility.value == 'private' %}checked{% endif %}>
+                                <span>
+                                    <b><i data-lucide="lock"></i> Private</b>
+                                    <small>Only you can see it.</small>
+                                </span>
+                            </label>
+                            <label class="choice">
+                                <input type="radio" name="visibility" value="public"
+                                       {% if form.visibility.value == 'public' %}checked{% endif %}>
+                                <span>
+                                    <b><i data-lucide="globe"></i> Public</b>
+                                    <small>Appears in discovery and search.</small>
+                                </span>
+                            </label>
+                            {% for error in form.visibility.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                        </div>
+                    </details>
+
+                </aside>
+            </div>
+        </form>
+    </main>
+{% endblock %}
+
+{% block footer %}{% endblock %}
+
+{% block vendor_js %}
+    <script src="{% static 'vendor/leaflet/leaflet.js' %}"></script>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Leaflet returns ~15 decimals but the model accepts at most 6.
+        document.getElementById('memory-form').addEventListener('submit', function () {
+            ['lat', 'lng'].forEach(function (id) {
+                var el = document.getElementById(id);
+                if (el && el.value !== '') {
+                    var n = parseFloat(el.value);
+                    if (!isNaN(n)) el.value = n.toFixed(6);
+                }
+            });
+        });
+    </script>
+{% endblock %}

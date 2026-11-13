@@ -1,4 +1,3 @@
-
 {% extends 'base.html' %}
 {% load static %}
 
@@ -6,362 +5,220 @@
 
 {% block content %}
 
-<main id="main" class="wrap">
+    <main id="main" class="wrap">
 
-    <div class="page-head">
-        <h1>Settings & privacy</h1>
-    </div>
-
-
-    <div class="settings">
-
-        <nav aria-label="Settings sections">
-
-            <a href="#profile">
-                <i data-lucide="user"></i>
-                Profile
-            </a>
-
-            <a href="#privacy">
-                <i data-lucide="shield-check"></i>
-                Privacy
-            </a>
-
-            <a href="#alerts">
-                <i data-lucide="bell"></i>
-                Notifications
-            </a>
-
-            <a href="#account">
-                <i data-lucide="key"></i>
-                Account
-            </a>
-
-        </nav>
+        <div class="page-head">
+            <h1>Settings & privacy</h1>
+        </div>
 
 
-        <div>
+        <div class="settings">
 
-            <!-- Profile -->
+            <nav aria-label="Settings sections">
 
-            <section id="profile">
+                <a href="#profile">
+                    <i data-lucide="user"></i>
+                    Profile
+                </a>
 
-                <h2>Profile</h2>
+                <a href="#privacy">
+                    <i data-lucide="shield-check"></i>
+                    Privacy
+                </a>
 
-                <form method="post"
-                      enctype="multipart/form-data"
-                      action="{% url 'account:edit' %}">
+                <a href="#account">
+                    <i data-lucide="key"></i>
+                    Account
+                </a>
 
-                    {% csrf_token %}
-
-                    {% if user_form.non_field_errors %}
-                        <div class="form-errors">
-                            {{ user_form.non_field_errors }}
-                        </div>
-                    {% endif %}
+            </nav>
 
 
-                    <div class="avatar-row">
+            <div>
 
-                        {% if request.user.image %}
+                <!-- Profile -->
 
-                            <img class="avatar avatar--xl"
-                                 src="{{ request.user.image.url }}"
-                                 alt="Profile photo">
+                <section id="profile">
 
-                        {% else %}
+                    <h2>Profile</h2>
 
-                            <span class="avatar avatar--xl">
+                    <form method="post"
+                          enctype="multipart/form-data"
+                          action="{% url 'account:edit' %}">
+
+                        {% csrf_token %}
+
+                        {% if user_form.non_field_errors %}
+                            <div class="form-errors">
+                                {{ user_form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+
+                        <div class="avatar-row">
+
+                            {% if request.user.image %}
+
+                                <img class="avatar avatar--xl"
+                                     src="{{ request.user.image.url }}"
+                                     alt="Profile photo">
+
+                            {% else %}
+
+                                <span class="avatar avatar--xl">
                                 {{ request.user.full_name|first|default:"U" }}
                             </span>
 
-                        {% endif %}
+                            {% endif %}
+
+                            <div class="field">
+
+                                <label for="{{ user_form.image.id_for_label }}">
+                                    Change photo
+                                </label>
+
+                                {{ user_form.image }}
+
+                                {% for error in user_form.image.errors %}
+                                    <small class="error">{{ error }}</small>
+                                {% endfor %}
+
+                            </div>
+
+                        </div>
+
 
                         <div class="field">
 
-                            <label for="{{ user_form.image.id_for_label }}">
-                                Change photo
+                            <label for="{{ user_form.full_name.id_for_label }}">
+                                Display name
                             </label>
 
-                            {{ user_form.image }}
+                            {{ user_form.full_name }}
 
-                            {% for error in user_form.image.errors %}
+                            {% for error in user_form.full_name.errors %}
                                 <small class="error">{{ error }}</small>
                             {% endfor %}
 
                         </div>
 
-                    </div>
 
+                        <button class="btn" type="submit">
+                            Save changes
+                        </button>
+
+                    </form>
+
+                </section>
+
+
+                <!-- Privacy -->
+
+                <section id="privacy">
+
+                    <h2>Privacy</h2>
+
+                    <form method="post" action="{% url 'account:privacy_settings' %}">
+                        {% csrf_token %}
+
+                        <div class="field">
+                            <span class="label">Default for new memories</span>
+
+                            <div style="display:grid;gap:.6rem">
+
+                                <label class="choice">
+                                    <input type="radio"
+                                           name="default_visibility"
+                                           value="private"
+                                           {% if request.user.default_visibility == 'private' %}checked{% endif %}>
+
+                                    <span>
+                        <b>
+                            <i data-lucide="lock"></i>
+                            Private
+                        </b>
+                        <small>You publish each memory yourself.</small>
+                    </span>
+                                </label>
+
+                                <label class="choice">
+                                    <input type="radio"
+                                           name="default_visibility"
+                                           value="public"
+                                           {% if request.user.default_visibility == 'public' %}checked{% endif %}>
+
+                                    <span>
+                        <b>
+                            <i data-lucide="globe"></i>
+                            Public
+                        </b>
+                    </span>
+                                </label>
+
+                            </div>
+                        </div>
+
+                        <button class="btn" type="submit">Save changes</button>
+                    </form>
+
+                </section>
+
+
+                <!-- Account -->
+
+                <section id="account">
+
+                    <h2>Account</h2>
 
                     <div class="field">
 
-                        <label for="{{ user_form.full_name.id_for_label }}">
-                            Display name
+                        <label for="phone_number">
+                            Phone number
                         </label>
 
-                        {{ user_form.full_name }}
+                        <input id="phone_number"
+                               type="text"
+                               value="{{ request.user.phone_number }}"
+                               dir="ltr"
+                               readonly>
 
-                        {% for error in user_form.full_name.errors %}
-                            <small class="error">{{ error }}</small>
-                        {% endfor %}
+                        <small class="muted">
+                            Your verified phone number is used for login.
+                        </small>
 
                     </div>
 
 
-                    <button class="btn" type="submit">
-                        Save changes
-                    </button>
+                </section>
 
-                </form>
 
-            </section>
+                <!-- Delete account -->
 
+                <section class="danger">
 
-            <!-- Privacy -->
+                    <h2>Delete account</h2>
 
-            <section id="privacy">
+                    <p class="muted">
+                        Deleting your account permanently removes
+                        all your folders and memories.
+                    </p>
 
-                <h2>Privacy</h2>
+                    <form method="POST" action="{% url 'account:delete' %}">
+                        {% csrf_token %}
 
-                <div class="field">
+                        <button class="btn btn--danger" type="submit">
+                            <i data-lucide="trash-2"></i>
+                            Delete my account
+                        </button>
+                    </form>
 
-                    <span class="label">
-                        Default for new memories
-                    </span>
 
-                    <div style="display:grid;gap:.6rem">
+                </section>
 
-                        <label class="choice">
-
-                            <input type="radio"
-                                   name="default_visibility"
-                                   value="private"
-                                   checked>
-
-                            <span>
-                                <b>
-                                    <i data-lucide="lock"></i>
-                                    Private
-                                </b>
-
-                                <small>
-                                    You publish each memory yourself.
-                                </small>
-                            </span>
-
-                        </label>
-
-
-                        <label class="choice">
-
-                            <input type="radio"
-                                   name="default_visibility"
-                                   value="public">
-
-                            <span>
-                                <b>
-                                    <i data-lucide="globe"></i>
-                                    Public
-                                </b>
-                            </span>
-
-                        </label>
-
-                    </div>
-
-                </div>
-
-
-                <label class="switch">
-
-                    <span>
-                        <b>Public profile</b>
-                        <br>
-
-                        <small class="muted">
-                            Others can see your public memories.
-                            Private folders and memories are never shown.
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch">
-
-                </label>
-
-
-                <label class="switch">
-
-                    <span>
-                        <b>Allow comments</b>
-                        <br>
-
-                        <small class="muted">
-                            On your public memories
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch">
-
-                </label>
-
-
-                <label class="switch">
-
-                    <span>
-                        <b>Allow questions</b>
-                        <br>
-
-                        <small class="muted">
-                            Let readers ask you questions.
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch">
-
-                </label>
-
-
-                <label class="switch">
-
-                    <span>
-                        <b>Hide exact location</b>
-                        <br>
-
-                        <small class="muted">
-                            Show only the city.
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch">
-
-                </label>
-
-            </section>
-
-
-            <!-- Notifications -->
-
-            <section id="alerts">
-
-                <h2>Notifications</h2>
-
-                <label class="switch">
-
-                    <span>
-                        <b>Likes</b>
-                        <br>
-
-                        <small class="muted">
-                            When someone likes your memory.
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch" checked>
-
-                </label>
-
-
-                <label class="switch">
-
-                    <span>
-                        <b>Comments & replies</b>
-                        <br>
-
-                        <small class="muted">
-                            For conversations you are in.
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch" checked>
-
-                </label>
-
-
-                <label class="switch">
-
-                    <span>
-                        <b>Questions</b>
-                        <br>
-
-                        <small class="muted">
-                            When someone asks about a place you shared.
-                        </small>
-                    </span>
-
-                    <input type="checkbox" role="switch" checked>
-
-                </label>
-
-            </section>
-
-
-            <!-- Account -->
-
-            <section id="account">
-
-                <h2>Account</h2>
-
-                <div class="field">
-
-                    <label for="phone_number">
-                        Phone number
-                    </label>
-
-                    <input id="phone_number"
-                           type="text"
-                           value="{{ request.user.phone_number }}"
-                           dir="ltr"
-                           readonly>
-
-                    <small class="muted">
-                        Your verified phone number is used for login.
-                    </small>
-
-                </div>
-
-                <p>
-                    <button class="btn btn--quiet"
-                            type="button"
-                            disabled>
-                        <i data-lucide="download"></i>
-                        Download my data
-                    </button>
-                </p>
-
-            </section>
-
-
-            <!-- Delete account -->
-
-            <section class="danger">
-
-                <h2>Delete account</h2>
-
-                <p class="muted">
-                    Deleting your account permanently removes
-                    all your folders and memories.
-                </p>
-
-                <button class="btn btn--danger"
-                        type="button"
-                        disabled>
-
-                    <i data-lucide="trash-2"></i>
-                    Delete my account
-
-                </button>
-
-                <small class="muted">
-                    Account deletion is not available yet.
-                </small>
-
-            </section>
+            </div>
 
         </div>
 
-    </div>
-
-</main>
+    </main>
 
 {% endblock %}

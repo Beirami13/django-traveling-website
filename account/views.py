@@ -11,6 +11,7 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.utils import timezone
 from django.views import View
+from django.views.decorators.http import require_POST
 
 from .forms import (
     UserLoginForm,
@@ -291,3 +292,31 @@ def UserLogout(request):
         return redirect("index")
 
     return redirect("index")
+
+
+@login_required(login_url="account:login")
+@require_POST
+def DeleteUser(request):
+    user = request.user
+
+    logout(request)
+    user.delete()
+
+    return redirect("index")
+
+
+@login_required(login_url="account:login")
+def notifications(request):
+    return render(request, "account/notifications.html")
+
+
+@login_required
+@require_POST
+def privacy_settings(request):
+    visibility = request.POST.get('default_visibility')
+
+    if visibility in ['public', 'private']:
+        request.user.default_visibility = visibility
+        request.user.save(update_fields=['default_visibility'])
+
+    return redirect('account:edit')
