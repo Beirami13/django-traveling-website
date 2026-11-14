@@ -4,15 +4,18 @@ from account.models import User
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 
+
 class Category(models.Model):
     name = models.CharField(max_length=100)
+
     def __str__(self):
         return self.name
 
+
 class Folder(models.Model):
     name = models.CharField(max_length=100)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='folders')
-    parent = models.ForeignKey('self',on_delete=models.CASCADE,null=True,blank=True,related_name='subfolders')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='folders')
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subfolders')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def clean(self):
@@ -26,28 +29,27 @@ class Folder(models.Model):
 
 
 class Memory(models.Model):
-
     class Visibility(models.TextChoices):
         PUBLIC = 'public', 'Public'
         PRIVATE = 'private', 'Private'
 
     title = models.CharField(max_length=100)
     story = models.TextField()
-    author = models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='memories')
-    folder = models.ForeignKey(Folder,on_delete=models.SET_NULL,null=True,blank=True,related_name='memories')
-    location = models.CharField(max_length=255,blank=True)
-    city = models.CharField(max_length=255,blank=True)
-    country = models.CharField(max_length=255,blank=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='memories')
+    folder = models.ForeignKey(Folder, on_delete=models.SET_NULL, null=True, blank=True, related_name='memories')
+    location = models.CharField(max_length=255, blank=True)
+    city = models.CharField(max_length=255, blank=True)
+    country = models.CharField(max_length=255, blank=True)
     category = models.ManyToManyField(Category, related_name='posts')
-    visibility = models.CharField(max_length=10,choices=Visibility.choices,default=User.default_visibility)
+    visibility = models.CharField( max_length=10,choices=Visibility.choices,default=Visibility.PRIVATE,)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    latitude = models.DecimalField(max_digits=9, decimal_places=6,null=True, blank=True,
-        validators=[MinValueValidator(Decimal('-90')), MaxValueValidator(Decimal('90'))],
-    )
-    longitude = models.DecimalField(max_digits=9, decimal_places=6,null=True, blank=True,
-        validators=[MinValueValidator(Decimal('-180')), MaxValueValidator(Decimal('180'))],
-    )
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True,
+                                   validators=[MinValueValidator(Decimal('-90')), MaxValueValidator(Decimal('90'))],
+                                   )
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True,
+                                    validators=[MinValueValidator(Decimal('-180')), MaxValueValidator(Decimal('180'))],
+                                    )
 
     @property
     def has_location(self):
@@ -57,21 +59,19 @@ class Memory(models.Model):
     def geo_uri(self):
         return f"geo:{self.latitude},{self.longitude}?q={self.latitude},{self.longitude}"
 
-
     def __str__(self):
         return self.title
 
 
 class MemoryMedia(models.Model):
-
     class MediaType(models.TextChoices):
         IMAGE = 'image', 'Image'
         VIDEO = 'video', 'Video'
 
-    memory = models.ForeignKey(Memory,on_delete=models.CASCADE,related_name='media')
+    memory = models.ForeignKey(Memory, on_delete=models.CASCADE, related_name='media')
     file = models.FileField(upload_to='memories/media/')
-    media_type = models.CharField(max_length=10,choices=MediaType.choices)
-    caption = models.CharField(max_length=255,blank=True)
+    media_type = models.CharField(max_length=10, choices=MediaType.choices)
+    caption = models.CharField(max_length=255, blank=True)
     order = models.PositiveIntegerField(default=0)
     is_cover = models.BooleanField(default=False)
 
@@ -118,4 +118,6 @@ class Like(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('memory', 'user')
+        constraints = [
+            models.UniqueConstraint(fields=['memory', 'user'], name='unique_like_per_memory')
+        ]

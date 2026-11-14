@@ -18,6 +18,14 @@
             border-radius: .75rem;
             resize: vertical;
         }
+        .pin-picker {
+            position: relative;
+            z-index: 0;
+            height: 280px;
+            margin-top: .5rem;
+            border-radius: .75rem;
+            border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
+        }
     </style>
 {% endblock %}
 
@@ -84,16 +92,53 @@
                     </details>
 
                     <details class="side-section" open>
-                        <summary><i data-lucide="folder"></i> Category &amp; folder</summary>
+                        <summary><i data-lucide="folder"></i> Folder &amp; category</summary>
                         <div class="side-section__body">
-                            <div class="field">
-                                <label for="{{ form.folder.id_for_label }}">Save in</label>
 
-                                {% for error in form.folder.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                            {# Choose: existing folder OR create a new (nested) one #}
+                            <div style="display:grid;gap:.6rem;margin-bottom:1rem">
+                                <label class="choice">
+                                    <input type="radio" name="folder_mode" value="existing"
+                                           {% if form.folder_mode.value != 'new' %}checked{% endif %}>
+                                    <span>
+                                        <b><i data-lucide="folder-open"></i> Existing folder</b>
+                                        <small>Put this memory in a folder you already have.</small>
+                                    </span>
+                                </label>
+                                <label class="choice">
+                                    <input type="radio" name="folder_mode" value="new"
+                                           {% if form.folder_mode.value == 'new' %}checked{% endif %}>
+                                    <span>
+                                        <b><i data-lucide="folder-plus"></i> New folder</b>
+                                        <small>Create a folder, optionally inside another one.</small>
+                                    </span>
+                                </label>
                             </div>
+
+                            <div id="folder-existing">
+                                <div class="field">
+                                    <label for="{{ form.folder.id_for_label }}">Save in</label>
+                                    {{ form.folder }}
+                                    {% for error in form.folder.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                                </div>
+                            </div>
+
+                            <div id="folder-new" hidden>
+                                <div class="field">
+                                    <label for="{{ form.new_folder_name.id_for_label }}">New folder name</label>
+                                    {{ form.new_folder_name }}
+                                    {% for error in form.new_folder_name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                                </div>
+                                <div class="field">
+                                    <label for="{{ form.new_folder_parent.id_for_label }}">Create it inside</label>
+                                    {{ form.new_folder_parent }}
+                                    {% for error in form.new_folder_parent.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                                </div>
+                            </div>
+
                             <div class="field" style="margin:0">
                                 <label for="{{ form.category.id_for_label }}">Categories</label>
-
+                                {{ form.category }}
                                 <small class="muted">Hold Ctrl (Cmd on Mac) to select several.</small>
                                 {% for error in form.category.errors %}<small class="error">{{ error }}</small>{% endfor %}
                             </div>
@@ -117,16 +162,16 @@
                                 {{ form.country }}
                             </div>
 
-                            <div class="map pick-map" data-map data-pick
-                                 {% if form.latitude.value and form.longitude.value %}
-                                     data-marker
-                                     data-lat="{{ form.latitude.value|unlocalize }}"
-                                     data-lng="{{ form.longitude.value|unlocalize }}"
-                                     data-zoom="13"
-                                 {% else %}
-                                     data-lat="32.4" data-lng="53.7" data-zoom="5"
-                                 {% endif %}>
-                                Click the map to set a pin
+                            {# Own map: independent of main.js #}
+                            <div class="pin-picker" id="pin-picker"></div>
+                            <p class="muted small" id="pin-state" style="margin:.5rem 0">Click the map to set a pin.</p>
+                            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+                                <button class="btn btn--quiet btn--sm" type="button" id="pin-locate">
+                                    <i data-lucide="locate"></i> Use my location
+                                </button>
+                                <button class="btn btn--quiet btn--sm" type="button" id="pin-clear">
+                                    <i data-lucide="x"></i> Clear pin
+                                </button>
                             </div>
 
                             <input type="hidden" id="lat" name="latitude"
@@ -176,15 +221,110 @@
 
 {% block extra_js %}
     <script>
-        // Leaflet returns ~15 decimals but the model accepts at most 6.
-        document.getElementById('memory-form').addEventListener('submit', function () {
-            ['lat', 'lng'].forEach(function (id) {
-                var el = document.getElementById(id);
-                if (el && el.value !== '') {
-                    var n = parseFloat(el.value);
-                    if (!isNaN(n)) el.value = n.toFixed(6);
-                }
+        /* ---------- Folder: existing vs new ---------- */
+        (function () {
+            var existing = document.getElementById('folder-existing');
+            var fresh = document.getElementById('folder-new');
+
+            function sync() {
+                var checked = document.querySelector('input[name="folder_mode"]:checked');
+                var isNew = checked && checked.value === 'new';
+                existing.hidden = isNew;
+                fresh.hidden = !isNew;
+            }
+
+            document.querySelectorAll('input[name="folder_mode"]').forEach(function (r) {
+                r.addEventListener('change', sync);
             });
-        });
+            sync();
+        })();
+
+        /* ---------- Location picker ---------- */
+        (function () {
+            var el = document.getElementById('pin-picker');
+            if (!el || typeof L === 'undefined') return;
+
+            var latInput = document.getElementById('lat');
+            var lngInput = document.getElementById('lng');
+            var state = document.getElementById('pin-state');
+
+            var hasPin = latInput.value !== '' && lngInput.value !== '';
+            var start = hasPin
+                ? [parseFloat(latInput.value), parseFloat(lngInput.value)]
+                : [32.4, 53.7];
+
+            var map = L.map(el).setView(start, hasPin ? 13 : 5);
+
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors'
+            }).addTo(map);
+
+            // CSS-only pin, so no marker images are needed
+            var pinIcon = L.divIcon({
+                className: '',
+                html: '<div style="width:22px;height:22px;border-radius:50% 50% 50% 0;' +
+                      'transform:rotate(-45deg);background:var(--accent,#d33);' +
+                      'border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>',
+                iconSize: [22, 22],
+                iconAnchor: [11, 22]
+            });
+
+            var marker = null;
+
+            function write(lat, lng) {
+                latInput.value = lat.toFixed(6);   // the model accepts at most 6 decimals
+                lngInput.value = lng.toFixed(6);
+                state.textContent = 'Pin set: ' + latInput.value + ', ' + lngInput.value + ' (drag to adjust)';
+            }
+
+            function setPin(lat, lng) {
+                if (marker) {
+                    marker.setLatLng([lat, lng]);
+                } else {
+                    marker = L.marker([lat, lng], {icon: pinIcon, draggable: true}).addTo(map);
+                    marker.on('dragend', function () {
+                        var p = marker.getLatLng();
+                        write(p.lat, p.lng);
+                    });
+                }
+                write(lat, lng);
+            }
+
+            function clearPin() {
+                if (marker) { map.removeLayer(marker); marker = null; }
+                latInput.value = '';
+                lngInput.value = '';
+                state.textContent = 'Click the map to set a pin.';
+            }
+
+            map.on('click', function (e) { setPin(e.latlng.lat, e.latlng.lng); });
+
+            document.getElementById('pin-clear').addEventListener('click', clearPin);
+
+            document.getElementById('pin-locate').addEventListener('click', function () {
+                if (!navigator.geolocation) {
+                    state.textContent = 'Your browser does not support location.';
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    setPin(pos.coords.latitude, pos.coords.longitude);
+                    map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+                }, function () {
+                    state.textContent = 'Could not get your location.';
+                });
+            });
+
+            if (hasPin) setPin(start[0], start[1]);
+
+            // Fix map size if the <details> was closed or the layout shifted
+            var details = el.closest('details');
+            if (details) {
+                details.addEventListener('toggle', function () {
+                    setTimeout(function () { map.invalidateSize(); }, 50);
+                });
+            }
+            setTimeout(function () { map.invalidateSize(); }, 200);
+        })();
     </script>
 {% endblock %}
