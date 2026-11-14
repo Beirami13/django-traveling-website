@@ -40,7 +40,7 @@ class Memory(models.Model):
     location = models.CharField(max_length=255, blank=True)
     city = models.CharField(max_length=255, blank=True)
     country = models.CharField(max_length=255, blank=True)
-    category = models.ManyToManyField(Category, related_name='posts')
+    category = models.ManyToManyField(Category, null=True, blank=True, related_name='posts')
     visibility = models.CharField( max_length=10,choices=Visibility.choices,default=Visibility.PRIVATE,)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

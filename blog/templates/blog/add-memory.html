@@ -31,6 +31,7 @@
 
 {# The editor has its own top bar instead of the site header #}
 {% block header %}
+    {{ block.super }}
     <div class="editor-bar">
         <div class="wrap">
             <a class="icon-btn"
